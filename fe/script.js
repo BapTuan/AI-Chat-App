@@ -14,7 +14,9 @@ imageInput.addEventListener('change', (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = () => {
-      currentImage = reader.result;
+      currentImage = reader.result; // base64
+      // Tự động gửi preview
+      appendMessage('user', '');
       appendImagePreview(reader.result);
     };
     reader.readAsDataURL(file);
@@ -45,27 +47,29 @@ async function sendMessage() {
   const message = userInput.value.trim();
   if (!message && !currentImage && !currentCSV && !csvURL.value) return;
 
-  appendMessage('user', message || 'Ask about uploaded file...');
+  // Nếu có ảnh nhưng chưa có tin nhắn → thêm placeholder
+  if (currentImage && !message) {
+    appendMessage('user', 'What’s in this photo?');
+  } else if (message) {
+    appendMessage('user', message);
+  }
+
   userInput.value = '';
   loading.style.display = 'block';
 
   const formData = new FormData();
-  formData.append('message', message);
+  formData.append('message', message || 'What’s in this photo?');
   if (currentImage) {
     const blob = await fetch(currentImage).then(r => r.blob());
-    formData.append('image', blob, 'upload.png');
+    formData.append('image', blob, 'image.png');
   }
   if (currentCSV) formData.append('csvFile', currentCSV);
   if (csvURL.value) formData.append('csvURL', csvURL.value);
 
   try {
-    const response = await fetch('/api/chat', { method: 'POST', body: formData }); // ← SỬA: response
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const data = await response.json();
-
-    appendMessage('assistant', data.reply || 'No reply');
-    if (data.image) appendImagePreview(data.image);
-    if (data.csvSummary) renderCSVSummary(data.csvSummary);
+    const res = await fetch('/api/chat', { method: 'POST', body: formData });
+    const data = await res.json();
+    appendMessage('assistant', data.reply);
   } catch (err) {
     appendMessage('assistant', `Error: ${err.message}`);
   } finally {
@@ -81,16 +85,32 @@ async function sendMessage() {
 function appendMessage(role, content) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
-  div.innerHTML = `<div>${marked.parse(content)}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+
+  const contentDiv = document.createElement('div');
+  contentDiv.className = 'message-content';
+  contentDiv.innerHTML = markedReady && content ? marked.parse(content) : content;
+
+  const timeDiv = document.createElement('div');
+  timeDiv.className = 'timestamp';
+  timeDiv.textContent = new Date().toLocaleTimeString();
+
+  div.appendChild(contentDiv);
+  div.appendChild(timeDiv);
   chatMessages.appendChild(div);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// Preview ảnh trong tin nhắn user
 function appendImagePreview(src) {
   const img = document.createElement('img');
   img.src = src;
   img.style.maxHeight = '200px';
-  const lastUserMsg = document.querySelector('.message.user:last-child');
+  img.style.borderRadius = '8px';
+  img.style.marginTop = '8px';
+  img.style.display = 'block';
+  img.style.boxShadow = '0 2px 8px rgba(0,0,0,0.3)';
+
+  const lastUserMsg = document.querySelector('.message.user:last-child .message-content');
   if (lastUserMsg) {
     lastUserMsg.appendChild(img);
   }
@@ -121,16 +141,16 @@ markedScript.onload = () => {
 markedScript.onerror = () => console.error('Failed to load marked.js');
 document.head.appendChild(markedScript);
 
-function appendMessage(role, content) {
-  const div = document.createElement('div');
-  div.className = `message ${role}`;
+//function appendMessage(role, content) {
+  //const div = document.createElement('div');
+  //div.className = `message ${role}`;
 
-  const render = () => {
-    const htmlContent = markedReady && content ? marked.parse(content) : content;
-    div.innerHTML = `<div>${htmlContent}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
-    chatMessages.appendChild(div);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  };
+  //const render = () => {
+   // const htmlContent = markedReady && content ? marked.parse(content) : content;
+   // div.innerHTML = `<div>${htmlContent}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+    //chatMessages.appendChild(div);
+    //chatMessages.scrollTop = chatMessages.scrollHeight;
+  //};
 
-  markedReady ? render() : setTimeout(render, 1000);
-}
+  //markedReady ? render() : setTimeout(render, 1000);
+//}

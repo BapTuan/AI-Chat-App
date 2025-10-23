@@ -30,18 +30,20 @@ async function chatWithGemini(messages, imageBuffer = null, csvData = null) {
   }
 
   // Thêm ảnh vào user cuối
-  if (imageBuffer) {
-    const last = contents[contents.length - 1];
-    if (!last || last.role !== 'user') {
-      contents.push({ role: 'user', parts: [] });
-    }
-    contents[contents.length - 1].parts.push({
-      inlineData: {
-        mimeType: imageBuffer.mimetype,
-        data: imageBuffer.buffer.toString('base64')
+if (imageBuffer) {
+  contents.push({
+    role: 'user',
+    parts: [
+      { text: "This is the uploaded image. Describe it in detail." },
+      {
+        inlineData: {
+          mimeType: imageBuffer.mimetype,
+          data: imageBuffer.buffer.toString('base64')
+        }
       }
-    });
-  }
+    ]
+  });
+}
 
   // Nếu contents rỗng → thêm tin nhắn đầu
   if (contents.length === 0) {

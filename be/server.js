@@ -61,10 +61,10 @@ app.post('/api/chat', upload.single('image'), async (req, res) => {
     }
 
     res.json({
-      reply: assistantReply,
-      image: currentImage ? `data:${currentImage.mimetype};base64,${currentImage.buffer.toString('base64')}` : null,
-      csvSummary: currentCSV
-    });
+        reply: assistantReply,
+        image: currentImage ? `data:${currentImage.mimetype};base64,${currentImage.buffer.toString('base64')}` : null,
+        csvSummary: currentCSV
+});
   } catch (err) {
     console.error("Server Error:", err);
     res.status(500).json({ reply: `Server Error: ${err.message}` });
