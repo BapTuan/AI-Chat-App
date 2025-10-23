@@ -13,7 +13,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../fe')));
 
-let chatHistory = []; // Lịch sử multi-turn
+let chatHistory = []; 
 let currentImage = null;
 let currentCSV = null;
 

@@ -8,7 +8,7 @@ async function chatWithGemini(messages, imageBuffer = null, csvData = null) {
 
   let contents = [];
 
-  // Thêm CSV nếu có
+  // Add CSV data vào user cuối
   if (csvData) {
     contents.push({
       role: 'user',
@@ -20,7 +20,7 @@ async function chatWithGemini(messages, imageBuffer = null, csvData = null) {
     });
   }
 
-  // Thêm lịch sử (luân phiên role)
+  //Add lịch sử chat
   let lastRole = null;
   for (const msg of messages) {
     const role = msg.role === 'user' ? 'user' : 'model';
@@ -29,7 +29,7 @@ async function chatWithGemini(messages, imageBuffer = null, csvData = null) {
     lastRole = role;
   }
 
-  // Thêm ảnh vào user cuối
+  // Thêm ảnh vào user 
 if (imageBuffer) {
   contents.push({
     role: 'user',

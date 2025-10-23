@@ -14,7 +14,7 @@ imageInput.addEventListener('change', (e) => {
   if (file) {
     const reader = new FileReader();
     reader.onload = () => {
-      currentImage = reader.result; // base64
+      currentImage = reader.result;
       // Tự động gửi preview
       appendMessage('user', '');
       appendImagePreview(reader.result);
@@ -146,8 +146,8 @@ document.head.appendChild(markedScript);
   //div.className = `message ${role}`;
 
   //const render = () => {
-   // const htmlContent = markedReady && content ? marked.parse(content) : content;
-   // div.innerHTML = `<div>${htmlContent}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+    //const htmlContent = markedReady && content ? marked.parse(content) : content;
+    //div.innerHTML = `<div>${htmlContent}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
     //chatMessages.appendChild(div);
     //chatMessages.scrollTop = chatMessages.scrollHeight;
   //};
