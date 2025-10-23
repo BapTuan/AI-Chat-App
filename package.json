@@ -7,17 +7,11 @@
     "start": "node be/server.js",
     "dev": "nodemon be/server.js"
   },
-  "keywords": [
-    "gemini",
-    "ai",
-    "chat",
-    "csv",
-    "image"
-  ],
+  "keywords": ["gemini", "ai", "chat", "csv", "image"],
   "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "@google/generative-ai": "^0.24.1",
+    "@google/generative-ai": "^0.21.0",
     "axios": "^1.7.7",
     "cors": "^2.8.5",
     "csv-parser": "^3.0.0",

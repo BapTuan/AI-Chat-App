@@ -42,7 +42,9 @@ function analyzeCSV(data) {
     missing: data.filter(row => row[h] === '' || row[h] == null).length
   })).sort((a, b) => b.missing - a.missing);
 
-  const sample = data.slice(0, 10);
+  const sample = data.slice(0, 10)
+  .map(row => Object.entries(row).map(([k, v]) => `${k}: ${v}`).join(' | '))
+  .join('\n');
 
   return {
     headers,

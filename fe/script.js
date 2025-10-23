@@ -59,12 +59,11 @@ async function sendMessage() {
   if (csvURL.value) formData.append('csvURL', csvURL.value);
 
   try {
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      body: formData
-    });
-    const data = await res.json();
-    appendMessage('assistant', data.reply);
+    const response = await fetch('/api/chat', { method: 'POST', body: formData }); // ← SỬA: response
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const data = await response.json();
+
+    appendMessage('assistant', data.reply || 'No reply');
     if (data.image) appendImagePreview(data.image);
     if (data.csvSummary) renderCSVSummary(data.csvSummary);
   } catch (err) {
@@ -111,8 +110,27 @@ function renderCSVSummary(summary) {
   }
   appendMessage('assistant', html);
 }
+let markedReady = false;
 
-// Load marked.js for markdown
-const script = document.createElement('script');
-script.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
-document.head.appendChild(script);
+const markedScript = document.createElement('script');
+markedScript.src = 'https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+markedScript.onload = () => {
+  markedReady = true;
+  console.log('marked.js loaded');
+};
+markedScript.onerror = () => console.error('Failed to load marked.js');
+document.head.appendChild(markedScript);
+
+function appendMessage(role, content) {
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+
+  const render = () => {
+    const htmlContent = markedReady && content ? marked.parse(content) : content;
+    div.innerHTML = `<div>${htmlContent}</div><div class="timestamp">${new Date().toLocaleTimeString()}</div>`;
+    chatMessages.appendChild(div);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  };
+
+  markedReady ? render() : setTimeout(render, 1000);
+}

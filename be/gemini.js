@@ -1,40 +1,67 @@
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+console.log("GEMINI KEY:", process.env.GEMINI_API_KEY ? "LOADED" : "MISSING");
 
 async function chatWithGemini(messages, imageBuffer = null, csvData = null) {
-  let content = [];
+  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+  const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-  // Add chat history
-  messages.forEach(msg => {
-    if (msg.role === 'user') {
-      content.push({ role: 'user', parts: [{ text: msg.content }] });
-    } else if (msg.role === 'assistant') {
-      content.push({ role: 'model', parts: [{ text: msg.content }] });
-    }
-  });
+  let contents = [];
 
-  // Add image if exists
+  // Thêm CSV nếu có
+  if (csvData) {
+    contents.push({
+      role: 'user',
+      parts: [{
+        text: `CSV data (first 10 rows):\n\`\`\`\n${csvData.sample}\n\`\`\`\n` +
+              `Total: ${csvData.totalRows} rows, columns: ${csvData.headers.join(', ')}\n` +
+              `Answer questions about this data.`
+      }]
+    });
+  }
+
+  // Thêm lịch sử (luân phiên role)
+  let lastRole = null;
+  for (const msg of messages) {
+    const role = msg.role === 'user' ? 'user' : 'model';
+    if (role === lastRole) continue; // Bỏ nếu trùng
+    contents.push({ role, parts: [{ text: msg.content }] });
+    lastRole = role;
+  }
+
+  // Thêm ảnh vào user cuối
   if (imageBuffer) {
-    content[content.length - 1].parts.push({
-      inline_data: {
-        mime_type: imageBuffer.mimetype,
+    const last = contents[contents.length - 1];
+    if (!last || last.role !== 'user') {
+      contents.push({ role: 'user', parts: [] });
+    }
+    contents[contents.length - 1].parts.push({
+      inlineData: {
+        mimeType: imageBuffer.mimetype,
         data: imageBuffer.buffer.toString('base64')
       }
     });
   }
 
-  // Add CSV context
-  if (csvData) {
-    content.unshift({
-      role: 'user',
-      parts: [{ text: `Here is the CSV data (first 10 rows as sample):\n\n${csvData.sample}\n\nFull data has ${csvData.totalRows} rows and columns: ${csvData.headers.join(', ')}.\nAnswer questions about this data.` }]
-    });
+  // Nếu contents rỗng → thêm tin nhắn đầu
+  if (contents.length === 0) {
+    contents.push({ role: 'user', parts: [{ text: 'Hello' }] });
   }
 
-  const result = await model.generateContent(content);
-  return result.response.text();
+  console.log("Sending to Gemini:", JSON.stringify(contents, null, 2));
+
+  try {
+    // ĐÚNG: { contents }
+    const result = await model.generateContent({ contents });
+    const response = result.response;
+    if (!response || typeof response.text !== 'function') {
+      throw new Error("Invalid response");
+    }
+    return response.text();
+  } catch (err) {
+    console.error("Gemini API Error:", err.message);
+    throw new Error(`Gemini API Error: ${err.message}`);
+  }
 }
 
 module.exports = { chatWithGemini };
